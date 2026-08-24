@@ -60,14 +60,18 @@ function handleMessage(ws, data) {
             break;
             
         case 'attack':
-            const room2 = findRoom(ws);
-            if (room2) {
-                const opponent = room2.p1 === ws ? room2.p2 : room2.p1;
-                if (opponent) {
-                    opponent.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
-                }
-            }
-            break;
+    console.log('Attack received');
+    const room2 = findRoom(ws);
+    console.log('Room found:', room2 ? 'yes' : 'no');
+    if (room2) {
+        const opponent = room2.p1 === ws ? room2.p2 : room2.p1;
+        console.log('Opponent:', opponent ? 'found' : 'not found');
+        if (opponent) {
+            opponent.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+            console.log('Attack sent');
+        }
+    }
+    break;
             
         case 'game_over':
             const room3 = findRoom(ws);
