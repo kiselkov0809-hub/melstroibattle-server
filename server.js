@@ -1,4 +1,4 @@
-const WebSocket = require('ws');
+            const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
@@ -33,7 +33,14 @@ wss.on('connection', (ws) => {
 function handleMessage(ws, data) {
     switch(data.type) {
         case 'join_queue':
-            matchmaking.push({ ws, nick: data.nick, character: data.character || 'melstroy' });
+            matchmaking.push({ 
+                ws, 
+                nick: data.nick, 
+                character: data.character || 'melstroy',
+                weapon: data.weapon || null,
+                artifacts: data.artifacts || [],
+                pet: data.pet || null
+            });
             ws.send(JSON.stringify({ type: 'queue_joined' }));
             findMatch(ws);
             break;
@@ -88,12 +95,34 @@ function findMatch(ws) {
             nick1: p1.nick, 
             nick2: p2.nick,
             char1: p1.character,
-            char2: p2.character
+            char2: p2.character,
+            weapon1: p1.weapon,
+            weapon2: p2.weapon,
+            artifacts1: p1.artifacts,
+            artifacts2: p2.artifacts,
+            pet1: p1.pet,
+            pet2: p2.pet
         };
         rooms[roomId] = room;
         
-        p1.ws.send(JSON.stringify({ type: 'match_found', opponent: p2.nick, side: 'left', opponentCharacter: p2.character }));
-        p2.ws.send(JSON.stringify({ type: 'match_found', opponent: p1.nick, side: 'right', opponentCharacter: p1.character }));
+        p1.ws.send(JSON.stringify({ 
+            type: 'match_found', 
+            opponent: p2.nick, 
+            side: 'left', 
+            opponentCharacter: p2.character,
+            opponentWeapon: p2.weapon,
+            opponentArtifacts: p2.artifacts,
+            opponentPet: p2.pet
+        }));
+        p2.ws.send(JSON.stringify({ 
+            type: 'match_found', 
+            opponent: p1.nick, 
+            side: 'right', 
+            opponentCharacter: p1.character,
+            opponentWeapon: p1.weapon,
+            opponentArtifacts: p1.artifacts,
+            opponentPet: p1.pet
+        }));
     }
 }
 
@@ -106,4 +135,4 @@ function findRoom(ws) {
     return null;
 }
 
-console.log('WebSocket server running');                
+console.log('WebSocket server running');
