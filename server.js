@@ -1,4 +1,4 @@
-            const WebSocket = require('ws');
+                    const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
@@ -45,10 +45,6 @@ function handleMessage(ws, data) {
             findMatch(ws);
             break;
             
-        case 'leave_queue':
-            matchmaking = matchmaking.filter(m => m.ws !== ws);
-            break;
-            
         case 'move':
             const room1 = findRoom(ws);
             if (room1) {
@@ -60,18 +56,14 @@ function handleMessage(ws, data) {
             break;
             
         case 'attack':
-    console.log('Attack received');
-    const room2 = findRoom(ws);
-    console.log('Room found:', room2 ? 'yes' : 'no');
-    if (room2) {
-        const opponent = room2.p1 === ws ? room2.p2 : room2.p1;
-        console.log('Opponent:', opponent ? 'found' : 'not found');
-        if (opponent) {
-            opponent.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
-            console.log('Attack sent');
-        }
-    }
-    break;
+            const room2 = findRoom(ws);
+            if (room2) {
+                const opponent = room2.p1 === ws ? room2.p2 : room2.p1;
+                if (opponent) {
+                    opponent.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+                }
+            }
+            break;
             
         case 'game_over':
             const room3 = findRoom(ws);
@@ -92,40 +84,30 @@ function findMatch(ws) {
         const p2 = matchmaking.shift();
         
         const roomId = Date.now() + Math.random();
-        const room = { 
-            id: roomId, 
+        rooms[roomId] = { 
             p1: p1.ws, 
             p2: p2.ws, 
             nick1: p1.nick, 
-            nick2: p2.nick,
-            char1: p1.character,
-            char2: p2.character,
-            weapon1: p1.weapon,
-            weapon2: p2.weapon,
-            artifacts1: p1.artifacts,
-            artifacts2: p2.artifacts,
-            pet1: p1.pet,
-            pet2: p2.pet
+            nick2: p2.nick
         };
-        rooms[roomId] = room;
         
         p1.ws.send(JSON.stringify({ 
             type: 'match_found', 
             opponent: p2.nick, 
             side: 'left', 
-            opponentCharacter: p2.character,
-            opponentWeapon: p2.weapon,
-            opponentArtifacts: p2.artifacts,
-            opponentPet: p2.pet
+            opponentCharacter: p2.character || 'melstroy',
+            opponentWeapon: p2.weapon || null,
+            opponentArtifacts: p2.artifacts || [],
+            opponentPet: p2.pet || null
         }));
         p2.ws.send(JSON.stringify({ 
             type: 'match_found', 
             opponent: p1.nick, 
             side: 'right', 
-            opponentCharacter: p1.character,
-            opponentWeapon: p1.weapon,
-            opponentArtifacts: p1.artifacts,
-            opponentPet: p1.pet
+            opponentCharacter: p1.character || 'melstroy',
+            opponentWeapon: p1.weapon || null,
+            opponentArtifacts: p1.artifacts || [],
+            opponentPet: p1.pet || null
         }));
     }
 }
