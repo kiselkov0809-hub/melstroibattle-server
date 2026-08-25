@@ -1,4 +1,4 @@
-            const WebSocket = require('ws');
+  const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -26,11 +26,16 @@ wss.on('connection', function(ws) {
 
 function handleMessage(ws, data) {
     if (data.type === 'join_queue') {
+        let maxHP = 100;
+        if (data.character === 'fog') maxHP = 200;
+        if (data.character === 'cat') maxHP = 300;
+        if (data.character === 'batnost') maxHP = 120;
+        
         matchmaking.push({ 
             ws: ws, 
             nick: data.nick, 
             character: data.character || 'melstroy',
-            maxHP: data.maxHP || 100,
+            maxHP: maxHP,
             special: data.special || null
         });
         ws.send(JSON.stringify({ type: 'queue_joined' }));
