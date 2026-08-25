@@ -1,4 +1,4 @@
-const WebSocket = require('ws');
+            const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -30,7 +30,8 @@ function handleMessage(ws, data) {
             ws: ws, 
             nick: data.nick, 
             character: data.character || 'melstroy',
-            maxHP: data.maxHP || 100
+            maxHP: data.maxHP || 100,
+            special: data.special || null
         });
         ws.send(JSON.stringify({ type: 'queue_joined' }));
         if (matchmaking.length >= 2) {
@@ -43,14 +44,16 @@ function handleMessage(ws, data) {
                 opponent: p2.nick, 
                 side: 'left', 
                 opponentCharacter: p2.character,
-                opponentMaxHP: p2.maxHP
+                opponentMaxHP: p2.maxHP,
+                opponentSpecial: p2.special
             }));
             p2.ws.send(JSON.stringify({ 
                 type: 'match_found', 
                 opponent: p1.nick, 
                 side: 'right', 
                 opponentCharacter: p1.character,
-                opponentMaxHP: p1.maxHP
+                opponentMaxHP: p1.maxHP,
+                opponentSpecial: p1.special
             }));
         }
     }
