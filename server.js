@@ -1,4 +1,4 @@
-                const WebSocket = require('ws');
+const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -26,15 +26,32 @@ wss.on('connection', function(ws) {
 
 function handleMessage(ws, data) {
     if (data.type === 'join_queue') {
-        matchmaking.push({ ws: ws, nick: data.nick, character: data.character || 'melstroy' });
+        matchmaking.push({ 
+            ws: ws, 
+            nick: data.nick, 
+            character: data.character || 'melstroy',
+            maxHP: data.maxHP || 100
+        });
         ws.send(JSON.stringify({ type: 'queue_joined' }));
         if (matchmaking.length >= 2) {
             const p1 = matchmaking.shift();
             const p2 = matchmaking.shift();
             const roomId = Date.now();
-            rooms[roomId] = { p1: p1.ws, p2: p2.ws, nick1: p1.nick, nick2: p2.nick };
-            p1.ws.send(JSON.stringify({ type: 'match_found', opponent: p2.nick, side: 'left', opponentCharacter: p2.character }));
-            p2.ws.send(JSON.stringify({ type: 'match_found', opponent: p1.nick, side: 'right', opponentCharacter: p1.character }));
+            rooms[roomId] = { p1: p1.ws, p2: p2.ws };
+            p1.ws.send(JSON.stringify({ 
+                type: 'match_found', 
+                opponent: p2.nick, 
+                side: 'left', 
+                opponentCharacter: p2.character,
+                opponentMaxHP: p2.maxHP
+            }));
+            p2.ws.send(JSON.stringify({ 
+                type: 'match_found', 
+                opponent: p1.nick, 
+                side: 'right', 
+                opponentCharacter: p1.character,
+                opponentMaxHP: p1.maxHP
+            }));
         }
     }
     
@@ -49,20 +66,8 @@ function handleMessage(ws, data) {
     if (data.type === 'attack') {
         for (let roomId in rooms) {
             const room = rooms[roomId];
-            if (room.p1 === ws) {
-                room.p2.send(JSON.stringify({ 
-                    type: 'opponent_attack', 
-                    dmg: data.dmg,
-                    opponentHP: data.opponentHP 
-                }));
-            }
-            if (room.p2 === ws) {
-                room.p1.send(JSON.stringify({ 
-                    type: 'opponent_attack', 
-                    dmg: data.dmg,
-                    opponentHP: data.opponentHP 
-                }));
-            }
+            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
         }
     }
     
