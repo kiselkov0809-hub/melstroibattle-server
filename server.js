@@ -1,4 +1,4 @@
-  const WebSocket = require('ws');
+              const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -76,6 +76,14 @@ function handleMessage(ws, data) {
             const room = rooms[roomId];
             if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
             if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+        }
+    }
+    
+    if (data.type === 'heal') {
+        for (let roomId in rooms) {
+            const room = rooms[roomId];
+            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
+            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
         }
     }
     
