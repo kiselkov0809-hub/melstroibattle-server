@@ -1,4 +1,4 @@
-                     const WebSocket = require('ws');
+const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -24,7 +24,6 @@ wss.on('connection', function(ws) {
     });
 });
 
-// Функция для получения HP и особенности персонажа
 function getCharacterInfo(characterId) {
     let hp = 100;
     let special = null;
@@ -56,6 +55,8 @@ function handleMessage(ws, data) {
             const p1 = matchmaking.shift();
             const p2 = matchmaking.shift();
             const roomId = Date.now();
+            const bgKeys = ['alley', 'ring', 'field', 'japan', 'mytishchi', 'novgorod'];
+            const rndBg = bgKeys[Math.floor(Math.random() * bgKeys.length)];
             rooms[roomId] = { p1: p1.ws, p2: p2.ws };
             p1.ws.send(JSON.stringify({ 
                 type: 'match_found', 
@@ -63,7 +64,8 @@ function handleMessage(ws, data) {
                 side: 'left', 
                 opponentCharacter: p2.character,
                 opponentMaxHP: p2.maxHP,
-                opponentSpecial: p2.special
+                opponentSpecial: p2.special,
+                bg: rndBg
             }));
             p2.ws.send(JSON.stringify({ 
                 type: 'match_found', 
@@ -71,7 +73,8 @@ function handleMessage(ws, data) {
                 side: 'right', 
                 opponentCharacter: p1.character,
                 opponentMaxHP: p1.maxHP,
-                opponentSpecial: p1.special
+                opponentSpecial: p1.special,
+                bg: rndBg
             }));
         }
     }
@@ -115,4 +118,4 @@ function handleMessage(ws, data) {
     }
 }
 
-console.log('Server running');                     
+console.log('Server running');                 
