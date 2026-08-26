@@ -1,4 +1,4 @@
-                                  const WebSocket = require('ws');
+                     const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -24,19 +24,32 @@ wss.on('connection', function(ws) {
     });
 });
 
+// Функция для получения HP и особенности персонажа
+function getCharacterInfo(characterId) {
+    let hp = 100;
+    let special = null;
+    
+    if (characterId === 'fog') { hp = 200; special = 'oneShot'; }
+    else if (characterId === 'cat') { hp = 300; special = 'crit'; }
+    else if (characterId === 'batnost') { hp = 120; special = 'lowHpHeal'; }
+    else if (characterId === 'babnost') { special = 'lowHpShield'; }
+    else if (characterId === 'mamnost') { special = 'rage'; }
+    else if (characterId === 'cheese') { special = 'everySecondBlock'; }
+    else if (characterId === 'pakost') { special = 'teleport'; }
+    
+    return { hp, special };
+}
+
 function handleMessage(ws, data) {
     if (data.type === 'join_queue') {
-        let maxHP = 100;
-        if (data.character === 'fog') maxHP = 200;
-        if (data.character === 'cat') maxHP = 300;
-        if (data.character === 'batnost') maxHP = 120;
+        const info = getCharacterInfo(data.character);
         
         matchmaking.push({ 
             ws: ws, 
             nick: data.nick, 
             character: data.character || 'melstroy',
-            maxHP: maxHP,
-            special: data.special || null
+            maxHP: info.hp,
+            special: info.special
         });
         ws.send(JSON.stringify({ type: 'queue_joined' }));
         if (matchmaking.length >= 2) {
@@ -102,4 +115,4 @@ function handleMessage(ws, data) {
     }
 }
 
-console.log('Server running');
+console.log('Server running');                     
