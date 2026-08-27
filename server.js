@@ -1,4 +1,4 @@
-            const WebSocket = require('ws');
+const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -42,20 +42,24 @@ function handleMessage(ws, data) {
             const p1 = matchmaking.shift();
             const p2 = matchmaking.shift();
             const roomId = Date.now();
+            const bgKeys = ['alley', 'ring', 'field', 'japan', 'mytishchi', 'novgorod'];
+            const rndBg = bgKeys[Math.floor(Math.random() * bgKeys.length)];
             rooms[roomId] = { p1: p1.ws, p2: p2.ws };
             p1.ws.send(JSON.stringify({ 
                 type: 'match_found', 
                 opponent: p2.nick, 
                 side: 'left', 
                 opponentCharacter: p2.character,
-                opponentMaxHP: p2.maxHP
+                opponentMaxHP: p2.maxHP,
+                bg: rndBg
             }));
             p2.ws.send(JSON.stringify({ 
                 type: 'match_found', 
                 opponent: p1.nick, 
                 side: 'right', 
                 opponentCharacter: p1.character,
-                opponentMaxHP: p1.maxHP
+                opponentMaxHP: p1.maxHP,
+                bg: rndBg
             }));
         }
     }
@@ -73,6 +77,14 @@ function handleMessage(ws, data) {
             const room = rooms[roomId];
             if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
             if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+        }
+    }
+    
+    if (data.type === 'heal') {
+        for (let roomId in rooms) {
+            const room = rooms[roomId];
+            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
+            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
         }
     }
     
