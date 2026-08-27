@@ -1,4 +1,4 @@
-const WebSocket = require('ws');
+            const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: process.env.PORT || 8080 });
 
 let rooms = {};
@@ -24,57 +24,38 @@ wss.on('connection', function(ws) {
     });
 });
 
-function getCharacterInfo(characterId) {
-    let hp = 100;
-    let special = null;
-    
-    if (characterId === 'fog') { hp = 200; special = 'oneShot'; }
-    else if (characterId === 'cat') { hp = 300; special = 'crit'; }
-    else if (characterId === 'batnost') { hp = 120; special = 'lowHpHeal'; }
-    else if (characterId === 'babnost') { special = 'lowHpShield'; }
-    else if (characterId === 'mamnost') { special = 'rage'; }
-    else if (characterId === 'cheese') { special = 'everySecondBlock'; }
-    else if (characterId === 'pakost') { special = 'teleport'; }
-    
-    return { hp, special };
-}
-
 function handleMessage(ws, data) {
     if (data.type === 'join_queue') {
-        const info = getCharacterInfo(data.character);
+        let maxHP = 100;
+        if (data.character === 'fog') maxHP = 200;
+        if (data.character === 'cat') maxHP = 300;
+        if (data.character === 'batnost') maxHP = 120;
         
         matchmaking.push({ 
             ws: ws, 
             nick: data.nick, 
             character: data.character || 'melstroy',
-            maxHP: info.hp,
-            special: info.special
+            maxHP: maxHP
         });
         ws.send(JSON.stringify({ type: 'queue_joined' }));
         if (matchmaking.length >= 2) {
             const p1 = matchmaking.shift();
             const p2 = matchmaking.shift();
             const roomId = Date.now();
-            const bgKeys = ['alley', 'ring', 'field', 'japan', 'mytishchi', 'novgorod'];
-            const rndBg = bgKeys[Math.floor(Math.random() * bgKeys.length)];
             rooms[roomId] = { p1: p1.ws, p2: p2.ws };
             p1.ws.send(JSON.stringify({ 
                 type: 'match_found', 
                 opponent: p2.nick, 
                 side: 'left', 
                 opponentCharacter: p2.character,
-                opponentMaxHP: p2.maxHP,
-                opponentSpecial: p2.special,
-                bg: rndBg
+                opponentMaxHP: p2.maxHP
             }));
             p2.ws.send(JSON.stringify({ 
                 type: 'match_found', 
                 opponent: p1.nick, 
                 side: 'right', 
                 opponentCharacter: p1.character,
-                opponentMaxHP: p1.maxHP,
-                opponentSpecial: p1.special,
-                bg: rndBg
+                opponentMaxHP: p1.maxHP
             }));
         }
     }
@@ -90,16 +71,8 @@ function handleMessage(ws, data) {
     if (data.type === 'attack') {
         for (let roomId in rooms) {
             const room = rooms[roomId];
-            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg, hp: data.hp }));
-            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg, hp: data.hp }));
-        }
-    }
-    
-    if (data.type === 'heal') {
-        for (let roomId in rooms) {
-            const room = rooms[roomId];
-            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
-            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_heal', hp: data.hp }));
+            if (room.p1 === ws) room.p2.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
+            if (room.p2 === ws) room.p1.send(JSON.stringify({ type: 'opponent_attack', dmg: data.dmg }));
         }
     }
     
@@ -118,4 +91,4 @@ function handleMessage(ws, data) {
     }
 }
 
-console.log('Server running');                 
+console.log('Server running');
